@@ -345,16 +345,27 @@ class Family implements FamilyInterface
     /**
      * {@inheritdoc}
      */
-    public function addAttributeRequirement(AttributeRequirementInterface $requirement)
+    public function addAttributeRequirement(AttributeRequirementInterface $newRequirement)
     {
-        $requirementKey = $this->getAttributeRequirementKey($requirement);
-        $requirements = $this->getAttributeRequirements();
+        $attributeId  = $newRequirement->getAttribute()->getId();
+        $channelId    = $newRequirement->getChannel()->getId();
+        $requirements = $this->requirements->getIterator();
 
-        if (!isset($requirements[$requirementKey])) {
-            $requirement->setFamily($this);
-            $this->requirements->add($requirement);
-        } else {
-            $requirements[$requirementKey]->setRequired($requirement->isRequired());
+        $requirementFound = false;
+        while ($requirements->valid() && !$requirementFound) {
+            $requirement = $requirements->current();
+            if ($requirement->getAttribute()->getId() === $attributeId &&
+                $requirement->getChannel()->getId() === $channelId
+            ) {
+                $requirement->setRequired($newRequirement->isRequired());
+                $requirementFound = true;
+            }
+            $requirements->next();
+        }
+
+        if (!$requirementFound) {
+            $newRequirement->setFamily($this);
+            $this->requirements->add($newRequirement);
         }
 
         return $this;
@@ -365,6 +376,7 @@ class Family implements FamilyInterface
      */
     public function removeAttributeRequirement(AttributeRequirementInterface $requirement)
     {
+        $requirement->setRequired(false);
         $this->requirements->removeElement($requirement);
 
         return $this;
@@ -375,10 +387,11 @@ class Family implements FamilyInterface
      */
     public function setAttributeRequirements(array $requirements)
     {
+        $this->requirements->clear();
         foreach ($requirements as $requirement) {
             $requirement->setFamily($this);
+            $this->requirements->add($requirement);
         }
-        $this->requirements = new ArrayCollection($requirements);
 
         return $this;
     }
@@ -388,7 +401,15 @@ class Family implements FamilyInterface
      */
     public function getAttributeRequirements()
     {
-        $result = array();
+        return $this->requirements;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getIndexedAttributeRequirements()
+    {
+        $result = [];
 
         foreach ($this->requirements as $requirement) {
             $key = $this->getAttributeRequirementKey($requirement);
