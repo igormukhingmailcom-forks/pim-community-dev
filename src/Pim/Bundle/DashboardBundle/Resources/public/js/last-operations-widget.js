@@ -24,6 +24,12 @@ define(
                 contentLoaded: false
             },
 
+            showListBtnTemplate: _.template(
+                '<a class="pull-right" id ="btn-show-list" href="javascript:void(0);" style="color: #444">'+
+                    '<i class="icon-tasks"></i>'+
+                '</a>'
+            ),
+
             template: _.template(
                 [
                     '<% if (!_.isEmpty(data)) { %>',
@@ -68,7 +74,8 @@ define(
             ),
 
             events: {
-                'click a.btn': 'followLink'
+                'click a.btn': 'followLink',
+                'click a#btn-show-list': 'showList'
             },
 
             followLink: function(e) {
@@ -89,6 +96,21 @@ define(
                 }
 
                 Navigation.getInstance().setLocation(routing);
+            },
+
+            setShowListBtn: function(el) {
+                this.$showListBtn = $(this.showListBtnTemplate());
+
+                this.$el.parent().siblings('.widget-header').append(this.$showListBtn);
+                this.$showListBtn.on('click', _.bind(this.showList, this));
+
+                return this;
+            },
+
+            showList: function(e) {
+                e.preventDefault();
+
+                Navigation.getInstance().setLocation(Routing.generate('pim_enrich_job_tracker_index'));
             },
 
             _processResponse: function(data) {
@@ -123,6 +145,7 @@ define(
                 } else if (_.has(options, 'el')) {
                     instance.setElement(options.el);
                 }
+                instance.setShowListBtn(options.el);
                 instance.render().delayedLoad();
             }
         };
