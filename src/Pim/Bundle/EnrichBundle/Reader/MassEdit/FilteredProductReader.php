@@ -80,6 +80,7 @@ class FilteredProductReader extends AbstractConfigurableStepElement implements P
         if (!$this->isExecuted) {
             $this->isExecuted = true;
             $this->products = $this->getProductsCursor($configuration['filters']);
+            $this->products->next();
         }
 
         $result = $this->products->current();
